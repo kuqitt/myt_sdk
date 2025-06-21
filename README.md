@@ -12,7 +12,7 @@ MYT SDK是一个Python包，用于简化MYT SDK的下载、安装和启动过程
 - 📁 智能缓存管理（使用系统缓存目录）
 - 🔍 进程检测（避免重复启动）
 - 🛡️ 完善的错误处理和日志记录
-- 💻 跨平台支持（主要针对Windows）
+- 💻 Windows
 - 🎯 简单的命令行接口
 - 🌐 完整的API客户端支持
 - 📱 容器管理和设备控制
@@ -205,12 +205,6 @@ except MYTSDKError as e:
 [![GitHub last commit](https://img.shields.io/github/last-commit/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/commits/main)
 [![GitHub contributors](https://img.shields.io/github/contributors/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/graphs/contributors)
 
-### 访问流量
-
-可以通过GitHub的Insights页面查看详细的访问统计：
-- [流量统计](https://github.com/kuqitt/myt_sdk/graphs/traffic)
-- [克隆统计](https://github.com/kuqitt/myt_sdk/graphs/clone-traffic)
-- [引用来源](https://github.com/kuqitt/myt_sdk/graphs/traffic)
 
 ## 文档
 
