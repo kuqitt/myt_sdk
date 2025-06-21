@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myt-sdk"
-version = "1.0.0"
 description = "MYT SDK - 魔云腾SDK通用包，用于自动下载、管理和启动MYT SDK，支持完整的API客户端功能"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -178,6 +177,10 @@ omit = [
     "*/test_*.py",
     "setup.py",
 ]
+
+[tool.setuptools_scm]
+write_to = "py_myt/_version.py"
+fallback_version = "1.0.0"
 
 [tool.coverage.report]
 exclude_lines = [
