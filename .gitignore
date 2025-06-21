@@ -50,6 +50,7 @@ local_scripts/
 windows_tools/
 temp_scripts/
 *.local
-
+.pypirc
+*.pypirc
 *.log
 .env
