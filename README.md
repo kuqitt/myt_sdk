@@ -217,7 +217,6 @@ except MYTSDKError as e:
 - [API客户端文档](docs/api_client.md)
 - [高级API方法文档](docs/advanced_api_methods.md)
 - [示例代码](examples/)
-- [GitHub监控指南](docs/github_monitoring.md)
 
 ## 开发
 
