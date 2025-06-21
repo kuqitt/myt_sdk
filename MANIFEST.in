@@ -1,0 +1,38 @@
+# 包含额外的文件到分发包中
+
+# 包含文档文件
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+# 包含配置文件
+include requirements.txt
+include pytest.ini
+include Makefile
+include .gitignore
+
+# 包含测试文件
+recursive-include tests *.py
+
+# 包含示例文件
+recursive-include examples *.py *.md
+
+# 包含文档源文件
+recursive-include docs *.rst *.md *.txt *.py
+
+# 排除不需要的文件
+exclude .coverage
+exclude .pytest_cache
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * *.so
+recursive-exclude * .DS_Store
+recursive-exclude * Thumbs.db
+
+# 排除构建文件
+prune build
+prune dist
+prune *.egg-info
+prune htmlcov
+prune .tox
+prune .mypy_cache
