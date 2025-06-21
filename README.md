@@ -176,9 +176,9 @@ except MYTSDKError as e:
 - 下载量监控
 - 用户行为追踪
 
-## GitHub仓库监控
+## GitHub仓库
 
-### 实时访问统计
+### 统计
 
 [![GitHub stars](https://img.shields.io/github/stars/kuqitt/myt_sdk?style=social)](https://github.com/kuqitt/myt_sdk/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/kuqitt/myt_sdk?style=social)](https://github.com/kuqitt/myt_sdk/network/members)
