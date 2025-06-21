@@ -18,6 +18,7 @@ MYT SDK是一个Python包，用于简化MYT SDK的下载、安装和启动过程
 - 📱 容器管理和设备控制
 - 🎥 摄像头和传感器配置
 - 📍 位置服务和代理管理
+- 📊 GitHub仓库实时监控和统计
 
 ## 安装
 
@@ -169,11 +170,123 @@ except MYTSDKError as e:
 - 视频文件预处理
 - 播放优化
 
+### GitHub监控
+- 实时访问统计
+- 仓库流量分析
+- 下载量监控
+- 用户行为追踪
+
+## GitHub仓库监控
+
+### 实时访问统计
+
+[![GitHub stars](https://img.shields.io/github/stars/kuqitt/myt_sdk?style=social)](https://github.com/kuqitt/myt_sdk/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/kuqitt/myt_sdk?style=social)](https://github.com/kuqitt/myt_sdk/network/members)
+[![GitHub watchers](https://img.shields.io/github/watchers/kuqitt/myt_sdk?style=social)](https://github.com/kuqitt/myt_sdk/watchers)
+[![GitHub issues](https://img.shields.io/github/issues/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/pulls)
+
+### 下载统计
+
+[![GitHub all releases](https://img.shields.io/github/downloads/kuqitt/myt_sdk/total)](https://github.com/kuqitt/myt_sdk/releases)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/releases/latest)
+[![PyPI downloads](https://img.shields.io/pypi/dm/myt-sdk)](https://pypi.org/project/myt-sdk/)
+
+### 代码质量
+
+[![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk)
+[![GitHub repo size](https://img.shields.io/github/repo-size/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk)
+[![GitHub language count](https://img.shields.io/github/languages/count/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk)
+[![GitHub top language](https://img.shields.io/github/languages/top/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk)
+
+### 活跃度统计
+
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/graphs/commit-activity)
+[![GitHub last commit](https://img.shields.io/github/last-commit/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/commits/main)
+[![GitHub contributors](https://img.shields.io/github/contributors/kuqitt/myt_sdk)](https://github.com/kuqitt/myt_sdk/graphs/contributors)
+
+### 访问流量
+
+可以通过GitHub的Insights页面查看详细的访问统计：
+- [流量统计](https://github.com/kuqitt/myt_sdk/graphs/traffic)
+- [克隆统计](https://github.com/kuqitt/myt_sdk/graphs/clone-traffic)
+- [引用来源](https://github.com/kuqitt/myt_sdk/graphs/traffic)
+
+### 实时监控API
+
+```python
+import requests
+
+def get_github_stats(repo_owner, repo_name):
+    """获取GitHub仓库统计信息"""
+    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
+    
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        data = response.json()
+        
+        stats = {
+            'stars': data['stargazers_count'],
+            'forks': data['forks_count'],
+            'watchers': data['watchers_count'],
+            'open_issues': data['open_issues_count'],
+            'size': data['size'],
+            'language': data['language'],
+            'created_at': data['created_at'],
+            'updated_at': data['updated_at'],
+            'pushed_at': data['pushed_at']
+        }
+        
+        return stats
+    except requests.RequestException as e:
+        print(f"获取GitHub统计信息失败: {e}")
+        return None
+
+# 使用示例
+stats = get_github_stats('kuqitt', 'myt_sdk')
+if stats:
+    print(f"⭐ Stars: {stats['stars']}")
+    print(f"🍴 Forks: {stats['forks']}")
+    print(f"👀 Watchers: {stats['watchers']}")
+    print(f"🐛 Open Issues: {stats['open_issues']}")
+    print(f"📦 Size: {stats['size']} KB")
+    print(f"💻 Language: {stats['language']}")
+```
+
+### 自动化监控脚本
+
+```python
+import time
+import json
+from datetime import datetime
+
+def monitor_github_repo(repo_owner, repo_name, interval=3600):
+    """持续监控GitHub仓库统计信息"""
+    while True:
+        stats = get_github_stats(repo_owner, repo_name)
+        if stats:
+            # 添加时间戳
+            stats['timestamp'] = datetime.now().isoformat()
+            
+            # 保存到文件
+            with open('github_stats.json', 'a') as f:
+                f.write(json.dumps(stats) + '\n')
+            
+            print(f"[{stats['timestamp']}] 统计信息已更新")
+        
+        time.sleep(interval)  # 等待指定间隔（默认1小时）
+
+# 启动监控
+# monitor_github_repo('kuqitt', 'myt_sdk')
+```
+
 ## 文档
 
 - [API客户端文档](docs/api_client.md)
 - [高级API方法文档](docs/advanced_api_methods.md)
 - [示例代码](examples/)
+- [GitHub监控指南](docs/github_monitoring.md)
 
 ## 开发
 
