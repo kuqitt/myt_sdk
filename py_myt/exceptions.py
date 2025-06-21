@@ -3,12 +3,12 @@
 
 class MYTSDKError(Exception):
     """MYT SDK 基础异常类"""
-    
+
     def __init__(self, message: str, error_code: str = None):
         super().__init__(message)
         self.message = message
         self.error_code = error_code
-    
+
     def __str__(self):
         if self.error_code:
             return f"[{self.error_code}] {self.message}"
@@ -17,12 +17,12 @@ class MYTSDKError(Exception):
 
 class MYTSDKDownloadError(MYTSDKError):
     """SDK下载相关异常"""
-    
+
     def __init__(self, message: str, url: str = None, status_code: int = None):
         super().__init__(message, "DOWNLOAD_ERROR")
         self.url = url
         self.status_code = status_code
-    
+
     def __str__(self):
         base_msg = super().__str__()
         if self.url:
@@ -34,12 +34,12 @@ class MYTSDKDownloadError(MYTSDKError):
 
 class MYTSDKProcessError(MYTSDKError):
     """SDK进程相关异常"""
-    
+
     def __init__(self, message: str, process_name: str = None, exit_code: int = None):
         super().__init__(message, "PROCESS_ERROR")
         self.process_name = process_name
         self.exit_code = exit_code
-    
+
     def __str__(self):
         base_msg = super().__str__()
         if self.process_name:
@@ -51,11 +51,11 @@ class MYTSDKProcessError(MYTSDKError):
 
 class MYTSDKConfigError(MYTSDKError):
     """SDK配置相关异常"""
-    
+
     def __init__(self, message: str, config_key: str = None):
         super().__init__(message, "CONFIG_ERROR")
         self.config_key = config_key
-    
+
     def __str__(self):
         base_msg = super().__str__()
         if self.config_key:
@@ -65,11 +65,11 @@ class MYTSDKConfigError(MYTSDKError):
 
 class MYTSDKFileError(MYTSDKError):
     """SDK文件操作相关异常"""
-    
+
     def __init__(self, message: str, file_path: str = None):
         super().__init__(message, "FILE_ERROR")
         self.file_path = file_path
-    
+
     def __str__(self):
         base_msg = super().__str__()
         if self.file_path:
