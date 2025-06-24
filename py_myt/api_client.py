@@ -1399,6 +1399,20 @@ class MYTAPIClient:
         """
         endpoint = f"/get_api_info/{ip}/{name}"
         return self._make_request("GET", endpoint)
+    def p1_get_api_info(self, ip: str, name: str) -> Dict[str, Any]:
+        """
+        获取API的详细信息
+
+        Args:
+            ip: IP地址
+            name: API名称
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/and_api/v1/get_api_info/{ip}/{name}"
+        return self._make_request("GET", endpoint)
     def pull_images(self, ip: str, image_addr: str) -> Dict[str, Any]:
         """
         拉取镜像
