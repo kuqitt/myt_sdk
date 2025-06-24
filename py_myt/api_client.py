@@ -1411,8 +1411,9 @@ class MYTAPIClient:
             API详细信息
             格式: {"code": 200, "msg": ""}
         """
-        endpoint = f"/pull_image/{ip}?img_addr={image_addr}"
-        return self._make_request("POST", endpoint)
+        endpoint = f"/pull_image/{ip}"
+        data = {"image_addr": image_addr}
+        return self._make_request("POST", endpoint, data=data)
     def pull_images2(self, ip: str, image_addr: str) -> Dict[str, Any]:
         """
         拉取镜像
@@ -1425,8 +1426,10 @@ class MYTAPIClient:
             API详细信息
             格式: {"code": 200, "msg": ""}
         """
-        endpoint = f"/pull_image2/{ip}?img_addr={image_addr}"
-        return self._make_request("POST", endpoint)
+        endpoint = f"/pull_image2/{ip}"
+        data = {"image_addr": image_addr}
+
+        return self._make_request("POST", endpoint, data=data)
 
 def create_client(
     base_url: str = "http://127.0.0.1:5000", timeout: int = 30
