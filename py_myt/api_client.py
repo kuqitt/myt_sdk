@@ -1399,7 +1399,34 @@ class MYTAPIClient:
         """
         endpoint = f"/get_api_info/{ip}/{name}"
         return self._make_request("GET", endpoint)
+    def pull_images(self, ip: str, image_addr: str) -> Dict[str, Any]:
+        """
+        拉取镜像
 
+        Args:
+            ip: IP地址
+            image_addr: 镜像地址
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/pull_image/{ip}?img_addr={image_addr}"
+        return self._make_request("POST", endpoint)
+    def pull_images2(self, ip: str, image_addr: str) -> Dict[str, Any]:
+        """
+        拉取镜像
+
+        Args:
+            ip: IP地址
+            image_addr: 镜像地址
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/pull_image2/{ip}?img_addr={image_addr}"
+        return self._make_request("POST", endpoint)
 
 def create_client(
     base_url: str = "http://127.0.0.1:5000", timeout: int = 30

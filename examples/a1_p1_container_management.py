@@ -200,11 +200,11 @@ if __name__ == "__main__":
     
     try:
         # 运行所有示例
-        # demo_a1_container_creation()
-        # demo_a1_container_advanced()
-        # demo_p1_container_creation()
-        # demo_p1_container_with_proxy()
-        # demo_container_with_port_mapping()
+        demo_a1_container_creation()
+        demo_a1_container_advanced()
+        demo_p1_container_creation()
+        demo_p1_container_with_proxy()
+        demo_container_with_port_mapping()
         demo_batch_container_creation()
         demo_error_handling()
         
