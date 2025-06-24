@@ -834,7 +834,25 @@ class MYTAPIClient:
             params["name"] = name
 
         return self._make_request("GET", endpoint, params=params)
+    def p1_run_android_container(self, ip, name, force=None):
+        """
+        运行安卓容器
 
+        Args:
+            ip (str): 3588主机IP地址
+            name (str): 容器名称
+            force (str, optional): 是否强制运行，1为强制，0为默认
+
+        Returns:
+            dict: 运行结果
+        """
+        endpoint = f"/dc_api/v1/run/{ip}/{name}"
+        params = {}
+
+        if force is not None:
+            params["force"] = force
+
+        return self._make_request("GET", endpoint, params=params)
     def run_android_container(self, ip, name, force=None):
         """
         运行安卓容器
