@@ -1431,7 +1431,34 @@ class MYTAPIClient:
         params = {"image_addr": image_addr}
 
         return self._make_request("POST", endpoint, params=params)
+    def del_container(self, ip: str, name: str) -> Dict[str, Any]:
+        """
+        删除容器
 
+        Args:
+            ip: IP地址
+            name: 容器名称
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/remove/{ip}/{name}"
+        return self._make_request("GET", endpoint)
+    def p1_del_container(self, ip: str, name: str) -> Dict[str, Any]:
+        """
+        删除容器
+
+        Args:
+            ip: IP地址
+            name: 容器名称
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/dc_api/v1/remove/{ip}/{name}"
+        return self._make_request("GET", endpoint)
 def create_client(
     base_url: str = "http://127.0.0.1:5000", timeout: int = 30
 ) -> MYTAPIClient:

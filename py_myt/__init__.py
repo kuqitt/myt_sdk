@@ -4,7 +4,7 @@ try:
     from ._version import __version__
 except ImportError:
     # 如果 _version.py 不存在，使用默认版本
-    __version__ = "1.0.3"
+    __version__ = "1.0.4"
 
 __author__ = "MYT Team"
 __email__ = "support@moyunteng.com"
