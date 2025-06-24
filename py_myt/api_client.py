@@ -1385,6 +1385,21 @@ class MYTAPIClient:
         params = {"path": path}
         return self._make_request("GET", endpoint, params=params)
 
+    def get_api_info(self, ip: str, name: str) -> Dict[str, Any]:
+        """
+        获取API的详细信息
+
+        Args:
+            ip: IP地址
+            name: API名称
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/get_api_info/{ip}/{name}"
+        return self._make_request("GET", endpoint)
+
 
 def create_client(
     base_url: str = "http://127.0.0.1:5000", timeout: int = 30

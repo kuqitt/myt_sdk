@@ -1011,6 +1011,19 @@ class TestMYTAPIClient:
                 "GET", "/s5_query/192.168.1.100/test_container"
             )
 
+    def test_get_api_info(self):
+        """测试获取API详细信息"""
+        with patch.object(self.client, "_make_request") as mock_request:
+            mock_request.return_value = {"code": 200, "msg": ""}
+
+            result = self.client.get_api_info("192.168.1.100", "test_api")
+
+            assert result["code"] == 200
+            assert result["msg"] == ""
+            mock_request.assert_called_once_with(
+                "GET", "/get_api_info/192.168.1.100/test_api"
+            )
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

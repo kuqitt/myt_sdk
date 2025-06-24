@@ -54,3 +54,4 @@ temp_scripts/
 *.pypirc
 *.log
 .env
+.*cache
