@@ -1465,7 +1465,7 @@ class MYTAPIClient:
         return self._make_request("GET", endpoint)
 
 def create_client(
-    base_url: str = "http://127.0.0.1:5000", timeout: int = 30
+    base_url: str = "http://127.0.0.1:5000", timeout: int = 30, api_type: str = None,
 ) -> MYTAPIClient:
     """
     创建MYT API客户端实例
@@ -1473,8 +1473,9 @@ def create_client(
     Args:
         base_url: API服务器基础URL
         timeout: 请求超时时间
+        api_type: API类型
 
     Returns:
         MYTAPIClient实例
     """
-    return MYTAPIClient(base_url=base_url, timeout=timeout)
+    return MYTAPIClient(base_url=base_url, timeout=timeout, api_type=api_type)
