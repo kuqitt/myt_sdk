@@ -20,22 +20,24 @@ logger = logging.getLogger(__name__)
 class MYTAPIClient:
     """MYT API客户端类"""
 
-    def __init__(self, base_url: str = "http://127.0.0.1:5000", timeout: int = 30):
+    def __init__(self, base_url: str = "http://127.0.0.1:5000", timeout: int = 30, api_type: Optional[str] = None):
         """
         初始化API客户端
 
         Args:
             base_url: API服务器基础URL，默认为127.0.0.1:5000
             timeout: 请求超时时间（秒），默认30秒
+            api_type: API类型，支持 'v1', 'P1', 'CQ1'，当设置为 'v1' 时会在请求路径前添加 '/and_api/v1/'
         """
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.api_type = api_type
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "MYT-SDK-Client/1.0.0", "Content-Type": "application/json"}
         )
 
-        logger.info(f"MYT API客户端初始化完成，服务器地址: {self.base_url}")
+        logger.info(f"MYT API客户端初始化完成，服务器地址: {self.base_url}, API类型: {self.api_type}")
 
     def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
         """
@@ -52,6 +54,10 @@ class MYTAPIClient:
         Raises:
             MYTSDKError: 请求失败时抛出
         """
+        # 根据API类型添加路径前缀
+        if self.api_type == "v1":
+            endpoint = f"/and_api/v1{endpoint}" if not endpoint.startswith("/and_api/v1") else endpoint
+        
         url = urljoin(self.base_url + "/", endpoint.lstrip("/"))
 
         try:
@@ -83,6 +89,7 @@ class MYTAPIClient:
     def login(self, username: str, password: str) -> Dict[str, Any]:
         """
         用户登录
+        注意：此接口不受api_type影响，始终使用原始路径
 
         Args:
             username: 用户名
@@ -93,7 +100,16 @@ class MYTAPIClient:
             格式: {"code": 200, "msg": "token_string"}
         """
         endpoint = f"/login/{username}/{password}"
-        return self._make_request("GET", endpoint)
+        url = f"{self.base_url}{endpoint}"
+        
+        try:
+            response = self.session.request("GET", url, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise MYTAPIError(f"Login request failed: {str(e)}") from e
+        except ValueError as e:
+            raise MYTAPIError(f"Invalid JSON response: {str(e)}") from e
 
     def get_version(self) -> Dict[str, Any]:
         """
@@ -834,25 +850,7 @@ class MYTAPIClient:
             params["name"] = name
 
         return self._make_request("GET", endpoint, params=params)
-    def p1_run_android_container(self, ip, name, force=None):
-        """
-        运行安卓容器
 
-        Args:
-            ip (str): 3588主机IP地址
-            name (str): 容器名称
-            force (str, optional): 是否强制运行，1为强制，0为默认
-
-        Returns:
-            dict: 运行结果
-        """
-        endpoint = f"/dc_api/v1/run/{ip}/{name}"
-        params = {}
-
-        if force is not None:
-            params["force"] = force
-
-        return self._make_request("GET", endpoint, params=params)
     def run_android_container(self, ip, name, force=None):
         """
         运行安卓容器
@@ -941,6 +939,7 @@ class MYTAPIClient:
 
         return self._make_request("GET", endpoint, params=params)
 
+   
     def get_android_boot_status(self, ip, name, isblock=0, timeout=120, init_devinfo=0):
         """
         获取安卓启动状态
@@ -1417,20 +1416,7 @@ class MYTAPIClient:
         """
         endpoint = f"/get_api_info/{ip}/{name}"
         return self._make_request("GET", endpoint)
-    def p1_get_api_info(self, ip: str, name: str) -> Dict[str, Any]:
-        """
-        获取API的详细信息
 
-        Args:
-            ip: IP地址
-            name: API名称
-
-        Returns:
-            API详细信息
-            格式: {"code": 200, "msg": ""}
-        """
-        endpoint = f"/and_api/v1/get_api_info/{ip}/{name}"
-        return self._make_request("GET", endpoint)
     def pull_images(self, ip: str, image_addr: str) -> Dict[str, Any]:
         """
         拉取镜像
@@ -1477,20 +1463,7 @@ class MYTAPIClient:
         """
         endpoint = f"/remove/{ip}/{name}"
         return self._make_request("GET", endpoint)
-    def p1_del_container(self, ip: str, name: str) -> Dict[str, Any]:
-        """
-        删除容器
 
-        Args:
-            ip: IP地址
-            name: 容器名称
-
-        Returns:
-            API详细信息
-            格式: {"code": 200, "msg": ""}
-        """
-        endpoint = f"/dc_api/v1/remove/{ip}/{name}"
-        return self._make_request("GET", endpoint)
 def create_client(
     base_url: str = "http://127.0.0.1:5000", timeout: int = 30
 ) -> MYTAPIClient:

@@ -22,6 +22,12 @@ from py_myt import MYTAPIClient, create_client
 # 方式1: 直接创建客户端
 client = MYTAPIClient(base_url="http://127.0.0.1:5000")
 
+# 方式2: 创建支持v1 API的客户端（自动添加/and_api/v1/前缀）
+client_v1 = MYTAPIClient(base_url="http://127.0.0.1:5000", api_type="v1")
+
+# 方式3: 创建其他API类型的客户端（P1, CQ1等，不添加前缀）
+client_p1 = MYTAPIClient(base_url="http://127.0.0.1:5000", api_type="P1")
+
 try:
     # 获取版本信息
     version = client.get_version()
@@ -33,6 +39,8 @@ try:
     
 finally:
     client.close()
+    client_v1.close()
+    client_p1.close()
 ```
 
 ### 使用上下文管理器（推荐）
@@ -49,6 +57,54 @@ with create_client() as client:
     images = client.get_image_list_v2("p1")
     print(f"镜像数量: {len(images['msg'])}")
 ```
+
+## API类型配置
+
+### 概述
+
+MYT API客户端支持不同的API类型配置，以适应不同的服务器端点结构：
+
+- **默认模式** (`api_type=None`): 直接使用原始端点路径
+- **v1模式** (`api_type="v1"`): 自动在所有请求路径前添加 `/and_api/v1/` 前缀
+- **其他模式** (`api_type="P1"`, `api_type="CQ1"` 等): 不添加路径前缀，但可用于标识API类型
+
+### 使用示例
+
+#### v1 API模式
+```python
+# 创建v1 API客户端
+client = MYTAPIClient(base_url="http://127.0.0.1:5000", api_type="v1")
+
+# 调用登录接口
+# 实际请求URL: http://127.0.0.1:5000/and_api/v1/login/admin/password123
+result = client.login("admin", "password123")
+```
+
+#### 默认模式
+```python
+# 创建默认客户端
+client = MYTAPIClient(base_url="http://127.0.0.1:5000")
+
+# 调用登录接口
+# 实际请求URL: http://127.0.0.1:5000/login/admin/password123
+result = client.login("admin", "password123")
+```
+
+#### 其他API类型
+```python
+# 创建P1类型客户端（不添加前缀，仅用于标识）
+client = MYTAPIClient(base_url="http://127.0.0.1:5000", api_type="P1")
+
+# 调用登录接口
+# 实际请求URL: http://127.0.0.1:5000/login/admin/password123
+result = client.login("admin", "password123")
+```
+
+### 路径前缀规则
+
+- 当 `api_type="v1"` 时，所有API端点会自动添加 `/and_api/v1/` 前缀
+- 如果端点已经包含 `/and_api/v1` 前缀，则不会重复添加
+- 其他 `api_type` 值（如 "P1", "CQ1"）不会影响路径，仅用于客户端标识
 
 ## API接口说明
 

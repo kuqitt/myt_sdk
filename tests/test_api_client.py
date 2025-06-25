@@ -1024,6 +1024,109 @@ class TestMYTAPIClient:
                 "GET", "/get_api_info/192.168.1.100/test_api"
             )
 
+    def test_api_type_v1_path_prefix(self):
+        """测试API类型为v1时的路径前缀"""
+        # 创建带有v1 API类型的客户端
+        client_v1 = MYTAPIClient(base_url=self.base_url, api_type="v1")
+        
+        with patch.object(client_v1.session, 'request') as mock_request:
+            mock_response = requests.Response()
+            mock_response.status_code = 200
+            mock_response._content = b'{"code": 200, "data": "1.0.14.30.25", "message": ""}'
+            mock_request.return_value = mock_response
+            
+            # 测试get_version接口
+            client_v1.get_version()
+            
+            # 验证调用时添加了v1前缀
+            mock_request.assert_called_once_with(
+                method='GET', 
+                url='http://127.0.0.1:5000/and_api/v1/version', 
+                timeout=30
+            )
+        
+        client_v1.close()
+
+    def test_api_type_non_v1_no_prefix(self):
+        """测试非v1 API类型不添加路径前缀"""
+        # 创建带有P1 API类型的客户端
+        client_p1 = MYTAPIClient(base_url=self.base_url, api_type="P1")
+        
+        with patch.object(client_p1.session, 'request') as mock_request:
+            mock_response = requests.Response()
+            mock_response.status_code = 200
+            mock_response._content = b'{"code": 200, "data": "1.0.14.30.25", "message": ""}'
+            mock_request.return_value = mock_response
+            
+            # 测试get_version接口
+            client_p1.get_version()
+            
+            # 验证调用时没有添加前缀
+            mock_request.assert_called_once_with(
+                method='GET', 
+                url='http://127.0.0.1:5000/version', 
+                timeout=30
+            )
+        
+        client_p1.close()
+
+    def test_api_type_none_no_prefix(self):
+        """测试API类型为None时不添加路径前缀"""
+        # 使用默认客户端（api_type=None）
+        with patch.object(self.client.session, 'request') as mock_request:
+            mock_response = requests.Response()
+            mock_response.status_code = 200
+            mock_response._content = b'{"code": 200, "data": "1.0.14.30.25", "message": ""}'
+            mock_request.return_value = mock_response
+            
+            # 测试get_version接口
+            self.client.get_version()
+            
+            # 验证调用时没有添加前缀
+            mock_request.assert_called_once_with(
+                method='GET', 
+                url='http://127.0.0.1:5000/version', 
+                timeout=30
+            )
+
+    def test_login_not_affected_by_api_type(self):
+        """测试login接口不受api_type影响"""
+        # 测试v1类型客户端的login接口
+        client_v1 = MYTAPIClient(base_url=self.base_url, api_type='v1')
+        
+        with patch.object(client_v1.session, 'request') as mock_request:
+            mock_response = requests.Response()
+            mock_response.status_code = 200
+            mock_response._content = b'{"code": 200, "msg": "token_string"}'
+            mock_request.return_value = mock_response
+            
+            client_v1.login('test_user', 'test_pass')
+            
+            # 验证login接口始终使用原始路径，不添加/and_api/v1/前缀
+            mock_request.assert_called_once_with(
+                'GET', 
+                'http://127.0.0.1:5000/login/test_user/test_pass', 
+                timeout=30
+            )
+        
+        client_v1.close()
+        
+        # 测试默认客户端的login接口
+        with patch.object(self.client.session, 'request') as mock_request:
+            mock_response = requests.Response()
+            mock_response.status_code = 200
+            mock_response._content = b'{"code": 200, "msg": "token_string"}'
+            mock_request.return_value = mock_response
+            
+            self.client.login('test_user', 'test_pass')
+            
+            # 验证默认客户端的login接口也使用原始路径
+            mock_request.assert_called_once_with(
+                'GET', 
+                'http://127.0.0.1:5000/login/test_user/test_pass', 
+                timeout=30
+            )
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
