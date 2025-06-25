@@ -20,24 +20,22 @@ logger = logging.getLogger(__name__)
 class MYTAPIClient:
     """MYT API客户端类"""
 
-    def __init__(self, base_url: str = "http://127.0.0.1:5000", timeout: int = 30, api_type: Optional[str] = None):
+    def __init__(self, base_url: str = "http://127.0.0.1:5000", timeout: int = 30,):
         """
         初始化API客户端
 
         Args:
             base_url: API服务器基础URL，默认为127.0.0.1:5000
             timeout: 请求超时时间（秒），默认30秒
-            api_type: API类型，支持 'v1', 'P1', 'CQ1'，当设置为 'v1' 时会在请求路径前添加 '/and_api/v1/'
         """
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self.api_type = api_type
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "MYT-SDK-Client/1.0.0", "Content-Type": "application/json"}
         )
 
-        logger.info(f"MYT API客户端初始化完成，服务器地址: {self.base_url}, API类型: {self.api_type}")
+        logger.info(f"MYT API客户端初始化完成，服务器地址: {self.base_url}")
 
     def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
         """
@@ -54,9 +52,6 @@ class MYTAPIClient:
         Raises:
             MYTSDKError: 请求失败时抛出
         """
-        # 根据API类型添加路径前缀
-        if self.api_type == "v1":
-            endpoint = f"/and_api/v1{endpoint}" if not endpoint.startswith("/and_api/v1") else endpoint
         
         url = urljoin(self.base_url + "/", endpoint.lstrip("/"))
 
@@ -89,7 +84,6 @@ class MYTAPIClient:
     def login(self, username: str, password: str) -> Dict[str, Any]:
         """
         用户登录
-        注意：此接口不受api_type影响，始终使用原始路径
 
         Args:
             username: 用户名
@@ -99,17 +93,13 @@ class MYTAPIClient:
             登录响应，包含token等信息
             格式: {"code": 200, "msg": "token_string"}
         """
-        endpoint = f"/login/{username}/{password}"
-        url = f"{self.base_url}{endpoint}"
-        
+        url = f"{self.base_url}/login/{username}/{password}"
         try:
-            response = self.session.request("GET", url, timeout=self.timeout)
+            response = self.session.request(method="GET", url=url, timeout=self.timeout)
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.RequestException as e:
-            raise MYTAPIError(f"Login request failed: {str(e)}") from e
-        except ValueError as e:
-            raise MYTAPIError(f"Invalid JSON response: {str(e)}") from e
+        except Exception as e:
+            raise MYTSDKError(f"登录请求失败: {str(e)}")
 
     def get_version(self) -> Dict[str, Any]:
         """
@@ -135,9 +125,9 @@ class MYTAPIClient:
         """
         return self._make_request("GET", "/host_api/v1/query_myt")
 
-    def get_image_list_v2(self, image_type: str) -> Dict[str, Any]:
+    def get_image_list(self, image_type: str) -> Dict[str, Any]:
         """
-        获取镜像列表V2
+        获取镜像列表
 
         Args:
             image_type: 镜像类型，可选值: p1, q1, a1, c1
@@ -163,25 +153,6 @@ class MYTAPIClient:
         return self._make_request(
             "GET", "/host_api/v1/get_img_list", params={"type": image_type}
         )
-
-    def get_image_list_v1(self) -> Dict[str, Any]:
-        """
-        获取镜像列表V1
-
-        Returns:
-            镜像列表
-            格式: {
-                "code": 200,
-                "msg": [
-                    {
-                        "id": "46",
-                        "image": "registry.cn-hangzhou.aliyuncs.com/whsyf/dobox:rk3588-dm-base-20230807-01",
-                        "name": "test_0807"
-                    }
-                ]
-            }
-        """
-        return self._make_request("GET", "/get_img_list")
 
     def get_device_info(self) -> Dict[str, Any]:
         """
@@ -289,7 +260,7 @@ class MYTAPIClient:
             MYTSDKError: 参数验证失败或请求失败时抛出
         """
         # 构建端点URL
-        endpoint = f"/create/{ip}/{index}/{name}"
+        endpoint = f"/dc_api/v1/create/{ip}/{index}/{name}"
 
         # 构建查询参数
         params = {
@@ -437,7 +408,7 @@ class MYTAPIClient:
         Returns:
             dict: API响应结果
         """
-        endpoint = f"/create_A1/{ip}/{index}/{name}"
+        endpoint = f"/dc_api/v1/create_A1/{ip}/{index}/{name}"
 
         # 构建查询参数
         params = {
@@ -570,7 +541,7 @@ class MYTAPIClient:
         Returns:
             dict: API响应结果
         """
-        endpoint = f"/create_P1/{ip}/{index}/{name}"
+        endpoint = f"/dc_api/v1/create_P1/{ip}/{index}/{name}"
 
         # 构建查询参数
         params = {
@@ -631,7 +602,7 @@ class MYTAPIClient:
         Returns:
             dict: 安卓实例详细信息，包含CPU、内存、分辨率等配置
         """
-        endpoint = f"/get_android_detail/{ip}/{name}"
+        endpoint = f"/dc_api/v1/get_android_detail/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
     def get_host_version(self, ip: str) -> Dict[str, Any]:
@@ -644,7 +615,7 @@ class MYTAPIClient:
         Returns:
             dict: 主机版本信息
         """
-        endpoint = f"/get_host_ver/{ip}"
+        endpoint = f"/dc_api/v1/get_host_ver/{ip}"
         return self._make_request("GET", endpoint)
 
     def upload_file_to_android(
@@ -661,7 +632,7 @@ class MYTAPIClient:
         Returns:
             dict: 上传结果
         """
-        endpoint = f"/upload_file/{ip}/{name}"
+        endpoint = f"/dc_api/v1/upload_file/{ip}/{name}"
         params = {"local": local_file}
         return self._make_request("GET", endpoint, params=params)
 
@@ -684,7 +655,7 @@ class MYTAPIClient:
         Returns:
             dict: 操作结果
         """
-        endpoint = f"/random_devinfo/{ip}/{name}"
+        endpoint = f"/and_api/v1/random_devinfo/{ip}/{name}"
         params = {}
         if userip is not None:
             params["userip"] = userip
@@ -712,7 +683,7 @@ class MYTAPIClient:
         Returns:
             dict: 异步操作结果
         """
-        endpoint = f"/random_devinfo_async/{ip}/{name}"
+        endpoint = f"/and_api/v1/random_devinfo_async/{ip}/{name}"
         params = {}
         if userip is not None:
             params["userip"] = userip
@@ -742,7 +713,7 @@ class MYTAPIClient:
         Returns:
             dict: 异步操作结果
         """
-        endpoint = f"/random_devinfo_async2/{ip}/{name}/{act}"
+        endpoint = f"/and_api/v1/random_devinfo_async2/{ip}/{name}/{act}"
         params = {}
         if userip is not None:
             params["userip"] = userip
@@ -794,7 +765,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_custom_devinfo/{ip}/{name}"
+        endpoint = f"/and_api/v1/set_custom_devinfo/{ip}/{name}"
 
         # 构建查询参数
         params = {}
@@ -841,7 +812,7 @@ class MYTAPIClient:
         Returns:
             dict: 容器列表信息
         """
-        endpoint = f"/get/{ip}"
+        endpoint = f"/dc_api/v1/get/{ip}"
         params = {}
 
         if index is not None:
@@ -863,7 +834,7 @@ class MYTAPIClient:
         Returns:
             dict: 运行结果
         """
-        endpoint = f"/run/{ip}/{name}"
+        endpoint = f"/dc_api/v1/run/{ip}/{name}"
         params = {}
 
         if force is not None:
@@ -901,7 +872,7 @@ class MYTAPIClient:
         Returns:
             dict: 剪切板内容
         """
-        endpoint = f"/clipboard_get/{ip}/{name}"
+        endpoint = f"/and_api/v1/clipboard_get/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
     def set_clipboard_content(self, ip, name, text):
@@ -916,7 +887,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/clipboard_set/{ip}/{name}"
+        endpoint = f"/and_api/v1/clipboard_set/{ip}/{name}"
         params = {"text": text}
 
         return self._make_request("GET", endpoint, params=params)
@@ -934,7 +905,7 @@ class MYTAPIClient:
         Returns:
             dict: 下载结果
         """
-        endpoint = f"/down_file/{ip}/{name}"
+        endpoint = f"/and_api/v1/down_file/{ip}/{name}"
         params = {"path": path, "local": local}
 
         return self._make_request("GET", endpoint, params=params)
@@ -954,7 +925,7 @@ class MYTAPIClient:
         Returns:
             dict: 启动状态
         """
-        endpoint = f"/get_android_boot_status/{ip}/{name}"
+        endpoint = f"/and_api/v1/get_android_boot_status/{ip}/{name}"
         params = {"isblock": isblock, "timeout": timeout, "init_devinfo": init_devinfo}
 
         return self._make_request("GET", endpoint, params=params)
@@ -971,7 +942,7 @@ class MYTAPIClient:
         Returns:
             dict: 安装结果
         """
-        endpoint = f"/install_apk/{ip}/{name}"
+        endpoint = f"/and_api/v1/install_apk/{ip}/{name}"
         params = {"local": local}
 
         return self._make_request("GET", endpoint, params=params)
@@ -989,7 +960,7 @@ class MYTAPIClient:
         Returns:
             dict: 安装结果
         """
-        endpoint = f"/install_apk_fromurl/{ip}/{name}"
+        endpoint = f"/and_api/v1/install_apk_fromurl/{ip}/{name}"
         data = {"url": url, "retry": retry}
 
         return self._make_request("POST", endpoint, data=data)
@@ -1006,7 +977,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/root_app/{ip}/{name}/{package}"
+        endpoint = f"/and_api/v1/root_app/{ip}/{name}/{package}"
         return self._make_request("GET", endpoint)
 
     def run_app(self, ip, name, pkg):
@@ -1021,7 +992,7 @@ class MYTAPIClient:
         Returns:
             dict: 运行结果
         """
-        endpoint = f"/run_apk/{ip}/{name}/{pkg}"
+        endpoint = f"/and_api/v1/run_apk/{ip}/{name}/{pkg}"
         return self._make_request("GET", endpoint)
 
     def take_screenshot(self, ip, name, level):
@@ -1036,7 +1007,7 @@ class MYTAPIClient:
         Returns:
             dict: 截图结果，包含URL和base64数据
         """
-        endpoint = f"/screenshots/{ip}/{name}/{level}"
+        endpoint = f"/and_api/v1/screenshots/{ip}/{name}/{level}"
         return self._make_request("GET", endpoint)
 
     def set_app_all_permissions(self, ip, name, pkg):
@@ -1051,7 +1022,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_app_permissions/{ip}/{name}/{pkg}"
+        endpoint = f"/and_api/v1/set_app_permissions/{ip}/{name}/{pkg}"
         return self._make_request("GET", endpoint)
 
     def set_app_resolution_filter(self, ip, name, pkg, enable):
@@ -1067,7 +1038,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_app_resloution_filter/{ip}/{name}/{pkg}/{enable}"
+        endpoint = f"/and_api/v1/set_app_resloution_filter/{ip}/{name}/{pkg}/{enable}"
         return self._make_request("GET", endpoint)
 
     def set_audio_playback(self, ip, name, act, path=None):
@@ -1083,7 +1054,7 @@ class MYTAPIClient:
         Returns:
             dict: 操作结果
         """
-        endpoint = f"/set_audio/{ip}/{name}/{act}"
+        endpoint = f"/and_api/v1/set_audio/{ip}/{name}/{act}"
         params = {}
 
         if path is not None:
@@ -1103,7 +1074,7 @@ class MYTAPIClient:
         Returns:
             dict: 命令执行结果
         """
-        endpoint = f"/shell/{ip}/{name}"
+        endpoint = f"/and_api/v1/shell/{ip}/{name}"
         data = {"cmd": cmd}
 
         return self._make_request("POST", endpoint, data=data)
@@ -1120,7 +1091,7 @@ class MYTAPIClient:
         Returns:
             dict: 命令执行结果
         """
-        endpoint = f"/shell2/{ip}/{name}"
+        endpoint = f"/and_api/v1/shell2/{ip}/{name}"
         data = {"cmd": cmd}
 
         return self._make_request("POST", endpoint, data=data)
@@ -1137,7 +1108,7 @@ class MYTAPIClient:
         Returns:
             dict: 卸载结果
         """
-        endpoint = f"/uninstall_apk/{ip}/{name}/{pkg}"
+        endpoint = f"/and_api/v1/uninstall_apk/{ip}/{name}/{pkg}"
         return self._make_request("GET", endpoint)
 
     def upload_google_cert(self, ip, name, local):
@@ -1152,7 +1123,7 @@ class MYTAPIClient:
         Returns:
             dict: 上传结果
         """
-        endpoint = f"/upload_google_cert/{ip}/{name}"
+        endpoint = f"/and_api/v1/upload_google_cert/{ip}/{name}"
         params = {"local": local}
 
         return self._make_request("GET", endpoint, params=params)
@@ -1169,7 +1140,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/s5_filter_url/{ip}/{name}"
+        endpoint = f"/and_api/v1/s5_filter_url/{ip}/{name}"
         data = {"url_list": url_list}
 
         return self._make_request("POST", endpoint, data=data)
@@ -1185,7 +1156,7 @@ class MYTAPIClient:
         Returns:
             dict: S5连接信息
         """
-        endpoint = f"/s5_query/{ip}/{name}"
+        endpoint = f"/and_api/v1/s5_query/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
     def close(self):
@@ -1230,7 +1201,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/s5_set/{ip}/{name}"
+        endpoint = f"/and_api/v1/s5_set/{ip}/{name}"
         params = {}
 
         if s5ip is not None:
@@ -1257,7 +1228,7 @@ class MYTAPIClient:
         Returns:
             dict: 关闭结果
         """
-        endpoint = f"/s5_stop/{ip}/{name}"
+        endpoint = f"/and_api/v1/s5_stop/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
     def get_camera_stream(self, ip: str, name: str) -> Dict[str, Any]:
@@ -1271,7 +1242,7 @@ class MYTAPIClient:
         Returns:
             dict: 摄像头推流信息
         """
-        endpoint = f"/get_cam_stream/{ip}/{name}"
+        endpoint = f"/and_api/v1/get_cam_stream/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
     def set_camera_rotation(
@@ -1289,7 +1260,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_cam_rot/{ip}/{name}/{rot}/{face}"
+        endpoint = f"/and_api/v1/set_cam_rot/{ip}/{name}/{rot}/{face}"
         return self._make_request("GET", endpoint)
 
     def set_camera_stream(
@@ -1313,7 +1284,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_cam_stream/{ip}/{name}/{v_type}"
+        endpoint = f"/and_api/v1/set_cam_stream/{ip}/{name}/{v_type}"
         params = {}
         data = {}
 
@@ -1336,7 +1307,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_motion_sensitivity/{ip}/{name}/{factor}"
+        endpoint = f"/and_api/v1/set_motion_sensitivity/{ip}/{name}/{factor}"
         return self._make_request("GET", endpoint)
 
     def set_shake_status(self, ip: str, name: str, enable: int) -> Dict[str, Any]:
@@ -1351,7 +1322,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_shake/{ip}/{name}/{enable}"
+        endpoint = f"/and_api/v1/set_shake/{ip}/{name}/{enable}"
         return self._make_request("GET", endpoint)
 
     def set_ip_location(self, ip: str, name: str, language: str) -> Dict[str, Any]:
@@ -1366,7 +1337,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_ipLocation/{ip}/{name}/{language}"
+        endpoint = f"/and_api/v1/set_ipLocation/{ip}/{name}/{language}"
         return self._make_request("GET", endpoint)
 
     def set_device_location(
@@ -1384,7 +1355,7 @@ class MYTAPIClient:
         Returns:
             dict: 设置结果
         """
-        endpoint = f"/set_location/{ip}/{name}"
+        endpoint = f"/and_api/v1/set_location/{ip}/{name}"
         params = {"lat": lat, "lng": lng}
         return self._make_request("GET", endpoint, params=params)
 
@@ -1398,7 +1369,7 @@ class MYTAPIClient:
         Returns:
             dict: 预处理结果
         """
-        endpoint = "/pre_deal_video"
+        endpoint = "/host_api/v1/pre_deal_video"
         params = {"path": path}
         return self._make_request("GET", endpoint, params=params)
 
@@ -1414,7 +1385,7 @@ class MYTAPIClient:
             API详细信息
             格式: {"code": 200, "msg": ""}
         """
-        endpoint = f"/get_api_info/{ip}/{name}"
+        endpoint = f"/and_api/v1/get_api_info/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
     def pull_images(self, ip: str, image_addr: str) -> Dict[str, Any]:
@@ -1429,7 +1400,7 @@ class MYTAPIClient:
             API详细信息
             格式: {"code": 200, "msg": ""}
         """
-        endpoint = f"/pull_image/{ip}"
+        endpoint = f"/dc_api/v1/pull_image/{ip}"
         params = {"image_addr": image_addr}
 
         return self._make_request("POST", endpoint, params=params)
@@ -1445,7 +1416,7 @@ class MYTAPIClient:
             API详细信息
             格式: {"code": 200, "msg": ""}
         """
-        endpoint = f"/pull_image2/{ip}"
+        endpoint = f"/dc_api/v1/pull_image2/{ip}"
         params = {"image_addr": image_addr}
 
         return self._make_request("POST", endpoint, params=params)
@@ -1461,11 +1432,11 @@ class MYTAPIClient:
             API详细信息
             格式: {"code": 200, "msg": ""}
         """
-        endpoint = f"/remove/{ip}/{name}"
+        endpoint = f"/dc_api/v1/remove/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
 def create_client(
-    base_url: str = "http://127.0.0.1:5000", timeout: int = 30, api_type: str = None,
+    base_url: str = "http://127.0.0.1:5000", timeout: int = 30,
 ) -> MYTAPIClient:
     """
     创建MYT API客户端实例
@@ -1473,9 +1444,8 @@ def create_client(
     Args:
         base_url: API服务器基础URL
         timeout: 请求超时时间
-        api_type: API类型
 
     Returns:
         MYTAPIClient实例
     """
-    return MYTAPIClient(base_url=base_url, timeout=timeout, api_type=api_type)
+    return MYTAPIClient(base_url=base_url, timeout=timeout)
