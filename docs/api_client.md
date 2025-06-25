@@ -93,6 +93,45 @@ device_info = client.get_device_info()
 # }
 ```
 
+#### 修改设备信息
+```python
+# 获取机型字典表
+result = client.modify_device_info("192.168.1.100", "container1", "1")
+
+# 海外机型随机
+result = client.modify_device_info("192.168.1.100", "container1", "2", abroad=1)
+
+# 设置指定机型
+result = client.modify_device_info("192.168.1.100", "container1", "2", model_id=1)
+
+# 完整参数示例
+result = client.modify_device_info(
+    ip="192.168.1.100",
+    name="container1", 
+    act="2",
+    abroad=1,
+    model_id=5,
+    lang="en",  # zh中文/en英语/fr法语/th泰国/vi越南/ja日本/ko韩国/lo老挝/in印尼
+    userip="192.168.1.200",
+    is_async=1  # 推荐使用异步方式
+)
+# 返回: {"code": 200, "msg": "success"}
+```
+
+**参数说明：**
+- `ip`: 3588主机IP地址（必选）
+- `name`: 容器名称（必选）
+- `act`: 操作类型（必选）
+  - `"1"`: 获取机型字典表
+  - `"2"`: 随机设备机型
+- `abroad`: 1表示海外设备机型随机（可选）
+- `model_id`: 指定机型ID（可选）
+- `lang`: 指定语言（可选）
+- `userip`: 指定环境对应IP所在区域（可选，仅支持IPv4）
+- `is_async`: 1表示使用异步方式（可选，推荐使用）
+
+**注意：** 此接口默认超时时间为60秒。
+
 ### 4. 镜像管理
 
 #### 获取镜像列表V2（推荐）

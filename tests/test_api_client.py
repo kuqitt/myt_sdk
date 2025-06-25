@@ -1024,9 +1024,76 @@ class TestMYTAPIClient:
                 "GET", "/get_api_info/192.168.1.100/test_api"
             )
 
+    def test_modify_device_info_get_model_list(self):
+        """测试获取机型字典表"""
+        with patch.object(self.client, "_make_request") as mock_request:
+            mock_request.return_value = {"code": 200, "msg": "success", "data": []}
 
+            result = self.client.modify_device_info("192.168.1.100", "container1", "1")
 
+            assert result["code"] == 200
+            mock_request.assert_called_once_with(
+                "GET", "/and_api/v1/devinfo/192.168.1.100/container1/1", params={}, timeout=60
+            )
 
+    def test_modify_device_info_random_overseas(self):
+        """测试海外机型随机"""
+        with patch.object(self.client, "_make_request") as mock_request:
+            mock_request.return_value = {"code": 200, "msg": "success"}
+
+            result = self.client.modify_device_info(
+                "192.168.1.100", "container1", "2", abroad=1
+            )
+
+            assert result["code"] == 200
+            mock_request.assert_called_once_with(
+                "GET", "/and_api/v1/devinfo/192.168.1.100/container1/2", 
+                params={"abroad": 1}, timeout=60
+            )
+
+    def test_modify_device_info_specific_model(self):
+        """测试设置指定机型"""
+        with patch.object(self.client, "_make_request") as mock_request:
+            mock_request.return_value = {"code": 200, "msg": "success"}
+
+            result = self.client.modify_device_info(
+                "192.168.1.100", "container1", "2", model_id=1
+            )
+
+            assert result["code"] == 200
+            mock_request.assert_called_once_with(
+                "GET", "/and_api/v1/devinfo/192.168.1.100/container1/2", 
+                params={"model_id": 1}, timeout=60
+            )
+
+    def test_modify_device_info_all_params(self):
+        """测试所有参数的设备信息修改"""
+        with patch.object(self.client, "_make_request") as mock_request:
+            mock_request.return_value = {"code": 200, "msg": "success"}
+
+            result = self.client.modify_device_info(
+                "192.168.1.100", 
+                "container1", 
+                "2",
+                abroad=1,
+                model_id=5,
+                lang="en",
+                userip="192.168.1.200",
+                is_async=1
+            )
+
+            assert result["code"] == 200
+            mock_request.assert_called_once_with(
+                "GET", "/and_api/v1/devinfo/192.168.1.100/container1/2", 
+                params={
+                    "abroad": 1,
+                    "model_id": 5,
+                    "lang": "en",
+                    "userip": "192.168.1.200",
+                    "is_async": 1
+                }, 
+                timeout=60
+            )
 
 
 if __name__ == "__main__":

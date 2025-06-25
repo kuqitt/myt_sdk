@@ -1435,6 +1435,61 @@ class MYTAPIClient:
         endpoint = f"/dc_api/v1/remove/{ip}/{name}"
         return self._make_request("GET", endpoint)
 
+    def modify_device_info(
+        self,
+        ip: str,
+        name: str,
+        act: str,
+        abroad: Optional[int] = None,
+        model_id: Optional[int] = None,
+        lang: Optional[str] = None,
+        userip: Optional[str] = None,
+        is_async: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        修改设备信息
+
+        Args:
+            ip: 3588主机ip地址
+            name: 容器名称
+            act: 操作类型，1=获取机型字典表，2=随机设备机型
+            abroad: 可选，1表示海外设备机型随机
+            model_id: 可选，获取机型列表字典中指定的机型参数
+            lang: 可选，随机后的指定语言 zh中文/en英语/fr法语/th泰国/vi越南/ja日本/ko韩国/lo老挝/in印尼
+            userip: 可选，指定环境对应ip所在的区域，如果不指定默认为当前云机的ip，注意：不支持域名仅支持ipv4地址
+            is_async: 可选，1表示使用异步的方式请求结果，能够准确的获取请求结果(推荐使用)但是仅仅支持最新的镜像
+
+        Returns:
+            设备信息修改结果
+            格式: {"code": 200, "msg": ""}
+
+        Examples:
+            # 获取机型列表
+            client.modify_device_info("192.168.1.100", "container1", "1")
+            
+            # 海外机型随机
+            client.modify_device_info("192.168.1.100", "container1", "2", abroad=1)
+            
+            # 设置指定机型
+            client.modify_device_info("192.168.1.100", "container1", "2", model_id=1)
+        """
+        endpoint = f"/and_api/v1/devinfo/{ip}/{name}/{act}"
+        params = {}
+        
+        if abroad is not None:
+            params["abroad"] = abroad
+        if model_id is not None:
+            params["model_id"] = model_id
+        if lang is not None:
+            params["lang"] = lang
+        if userip is not None:
+            params["userip"] = userip
+        if is_async is not None:
+            params["is_async"] = is_async
+
+        # 设置默认超时时间为60秒
+        return self._make_request("GET", endpoint, params=params, timeout=60)
+
 def create_client(
     base_url: str = "http://127.0.0.1:5000", timeout: int = 30,
 ) -> MYTAPIClient:
