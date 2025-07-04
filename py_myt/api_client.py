@@ -1184,7 +1184,7 @@ class MYTAPIClient:
         s5port: Optional[str] = None,
         s5user: Optional[str] = None,
         s5pwd: Optional[str] = None,
-        domain_mode: Optional[int] = None,
+        domain_mode: Optional[int] = 1,
     ) -> Dict[str, Any]:
         """
         设置S5连接
