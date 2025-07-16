@@ -30,7 +30,7 @@ class MYTSDKManager:
     SDK_VERSION = "1.0.14.30.25"
     SDK_DOWNLOAD_URL = "http://d.moyunteng.com/sdk/myt_sdk_1.0.14.30.25.zip"
     SDK_EXECUTABLE = "myt_sdk/myt_sdk.exe"
-
+    SDK_NAME = 'myt_sdk.exe'
     def __init__(self, cache_dir: Optional[str] = None):
         """
         初始化SDK管理器
@@ -346,6 +346,133 @@ class MYTSDKManager:
         except Exception as e:
             raise MYTSDKProcessError(
                 f"启动SDK进程失败: {str(e)}", process_name=self.SDK_EXECUTABLE
+            )
+
+    def stop_sdk(self, force: bool = False, timeout: int = 10) -> Dict[str, Any]:
+        """
+        停止SDK进程
+
+        Args:
+            force: 是否强制终止进程
+            timeout: 等待进程正常退出的超时时间（秒）
+
+        Returns:
+            停止操作的结果信息
+
+        Raises:
+            MYTSDKProcessError: 停止失败时抛出
+        """
+        if not self.is_sdk_running():
+            logger.info("SDK进程未运行")
+            return {
+                "status": "not_running",
+                "message": "SDK进程未运行",
+                "stopped_processes": 0
+            }
+
+        stopped_processes = 0
+        failed_processes = []
+
+        try:
+            logger.info("开始停止SDK进程")
+
+            # 查找所有相关的SDK进程
+            sdk_processes = []
+            for proc in psutil.process_iter(["pid", "name", "exe"]):
+                try:
+                    if (
+                        proc.info["name"]
+                        and self.SDK_NAME.lower() in proc.info["name"].lower()
+                    ):
+                        sdk_processes.append(proc)
+                    elif (
+                        proc.info["exe"]
+                        and str(self.sdk_executable_path).lower()
+                        in proc.info["exe"].lower()
+                    ):
+                        sdk_processes.append(proc)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+            if not sdk_processes:
+                logger.info("未找到运行中的SDK进程")
+                return {
+                    "status": "not_found",
+                    "message": "未找到运行中的SDK进程",
+                    "stopped_processes": 0
+                }
+
+            # 尝试优雅地停止进程
+            for proc in sdk_processes:
+                try:
+                    logger.info(f"尝试停止SDK进程 PID: {proc.pid}")
+                    
+                    if force:
+                        # 强制终止
+                        proc.kill()
+                        logger.info(f"强制终止进程 PID: {proc.pid}")
+                    else:
+                        # 优雅停止
+                        proc.terminate()
+                        logger.info(f"发送终止信号到进程 PID: {proc.pid}")
+                        
+                        # 等待进程退出
+                        try:
+                            proc.wait(timeout=timeout)
+                            logger.info(f"进程 PID: {proc.pid} 已正常退出")
+                        except psutil.TimeoutExpired:
+                            logger.warning(f"进程 PID: {proc.pid} 在{timeout}秒内未退出，强制终止")
+                            proc.kill()
+                            proc.wait(timeout=5)  # 等待强制终止完成
+                            logger.info(f"强制终止进程 PID: {proc.pid} 完成")
+                    
+                    stopped_processes += 1
+                    
+                except psutil.NoSuchProcess:
+                    logger.info(f"进程 PID: {proc.pid} 已不存在")
+                    stopped_processes += 1
+                except psutil.AccessDenied as e:
+                    logger.error(f"无权限停止进程 PID: {proc.pid}: {e}")
+                    failed_processes.append({"pid": proc.pid, "error": "权限不足"})
+                except Exception as e:
+                    logger.error(f"停止进程 PID: {proc.pid} 时出错: {e}")
+                    failed_processes.append({"pid": proc.pid, "error": str(e)})
+
+            # 验证是否还有进程在运行
+            if self.is_sdk_running():
+                remaining_msg = "部分SDK进程可能仍在运行"
+                logger.warning(remaining_msg)
+                if failed_processes:
+                    return {
+                        "status": "partial_success",
+                        "message": remaining_msg,
+                        "stopped_processes": stopped_processes,
+                        "failed_processes": failed_processes
+                    }
+                else:
+                    return {
+                        "status": "partial_success",
+                        "message": remaining_msg,
+                        "stopped_processes": stopped_processes
+                    }
+            else:
+                success_msg = f"成功停止 {stopped_processes} 个SDK进程"
+                logger.info(success_msg)
+                result = {
+                    "status": "success",
+                    "message": success_msg,
+                    "stopped_processes": stopped_processes
+                }
+                if failed_processes:
+                    result["failed_processes"] = failed_processes
+                return result
+
+        except Exception as e:
+            error_msg = f"停止SDK进程时发生错误: {str(e)}"
+            logger.error(error_msg)
+            raise MYTSDKProcessError(
+                error_msg,
+                process_name=self.SDK_EXECUTABLE
             )
 
     def init(self, force: bool = False, start_sdk: bool = True) -> Dict[str, Any]:

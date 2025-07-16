@@ -590,6 +590,33 @@ class MYTAPIClient:
                 params[key] = value
 
         return self._make_request("POST", endpoint, params=params)
+    # 导入容器
+    def  import_container(self, ip: str, name: str, image_addr: str, imgcompress: int = 0) -> Dict[str, Any]:
+        """
+        导入容器
+
+        Args:
+            ip (str): 主机IP地址
+            name (str): 容器名称
+            image_addr (str): 镜像地址
+
+        Returns:
+            dict: 导入结果
+        """
+        """
+            参数名称	是否必选	请求方式	数据类型	字段说明
+            ip	必选	PATH	str	3588主机ip地址
+            names	必选	query	str	容器名称，多个容器用逗号分隔
+            local	必选	query	str	资源镜像的名称 默认存在当前目录 backup 下,多个路径用逗号分隔,需要与names一一对应
+            imgcompress	可选	query	int	启用img文件压缩 默认为0 不启用 1 为启用
+        """
+        params = {
+            "names": name,
+            "local": image_addr,
+            "imgcompress": imgcompress,
+        }
+        endpoint = f"/dc_api/v1/batch_export/{ip}"
+        return self._make_request("GET", endpoint, params=params)
 
     def get_android_detail(self, ip: str, name: str) -> Dict[str, Any]:
         """
@@ -1230,7 +1257,19 @@ class MYTAPIClient:
         """
         endpoint = f"/and_api/v1/s5_stop/{ip}/{name}"
         return self._make_request("GET", endpoint)
+    def reboot(self, ip: str, name: str) -> Dict[str, Any]:
+        """
+        重启容器
 
+        Args:
+            ip: 3588主机IP地址
+            name: 容器名称
+
+        Returns:
+            dict: 重启结果
+        """
+        endpoint = f"/dc_api/v1/reboot/{ip}/{name}"
+        return self._make_request("GET", endpoint)
     def get_camera_stream(self, ip: str, name: str) -> Dict[str, Any]:
         """
         获取摄像头推流地址和类型
@@ -1387,7 +1426,34 @@ class MYTAPIClient:
         """
         endpoint = f"/and_api/v1/get_api_info/{ip}/{name}"
         return self._make_request("GET", endpoint)
+    def stop_android(self, ip: str, name: str) -> Dict[str, Any]:
+        """
+        停止安卓容器
 
+        Args:
+            ip: IP地址
+            name: 实例名称
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/dc_api/v1/stop/{ip}/{name}"
+        return self._make_request("GET", endpoint)
+    def reset_android(self, ip: str, name: str) -> Dict[str, Any]:
+        """
+        重置安卓容器
+
+        Args:
+            ip: IP地址
+            name: API名称
+
+        Returns:
+            API详细信息
+            格式: {"code": 200, "msg": ""}
+        """
+        endpoint = f"/dc_api/v1/reset/{ip}/{name}"
+        return self._make_request("GET", endpoint)
     def pull_images(self, ip: str, image_addr: str) -> Dict[str, Any]:
         """
         拉取镜像
