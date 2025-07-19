@@ -281,11 +281,35 @@ class MYTSDKManager:
             logger.info(f"  版本: {old_version} -> {new_version}")
             logger.info(f"  下载地址: {old_url} -> {download_url}")
             logger.info(f"  SDK目录: {self.sdk_dir}")
+            logger.info(f"  可执行文件路径: {self.sdk_executable_path}")
             
         except Exception as e:
             error_msg = f"更新SDK配置失败: {str(e)}"
             logger.error(error_msg)
             raise MYTSDKError(error_msg)
+
+    def _refresh_executable_path(self) -> None:
+        """刷新可执行文件路径，确保指向正确的位置"""
+        try:
+            # 重新设置基础路径
+            self.sdk_executable_path = self.sdk_dir / self.SDK_EXECUTABLE
+            
+            # 如果SDK已安装，查找实际的可执行文件位置
+            if self.sdk_dir.exists():
+                exe_filename = Path(self.SDK_EXECUTABLE).name
+                for root, dirs, files in os.walk(self.sdk_dir):
+                    for file in files:
+                        if file.lower() == exe_filename.lower():
+                            actual_path = Path(root) / file
+                            if actual_path.exists():
+                                self.sdk_executable_path = actual_path
+                                logger.debug(f"刷新可执行文件路径: {self.sdk_executable_path}")
+                                return
+                                
+            logger.debug(f"使用默认可执行文件路径: {self.sdk_executable_path}")
+            
+        except Exception as e:
+            logger.warning(f"刷新可执行文件路径时出错: {e}")
 
     def _prepare_sdk_environment(self) -> None:
         """
@@ -570,6 +594,8 @@ class MYTSDKManager:
                 logger.info("开始下载SDK")
                 self.download_sdk(force=force)
                 logger.info("SDK下载完成")
+                # 重新下载后刷新可执行文件路径
+                self._refresh_executable_path()
 
             # 是否启动SDK
             if start_sdk and not self.is_sdk_running():
