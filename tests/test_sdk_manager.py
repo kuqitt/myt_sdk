@@ -62,7 +62,7 @@ class TestMYTSDKManager(unittest.TestCase):
         # 创建一个模拟进程，其中包含 myt_sdk.exe
         def mock_iter(attrs):
             mock_process = Mock()
-            mock_process.info = {"name": "myt_sdk.exe", "pid": 12345, "exe": None}
+            mock_process.info = {"name": "myt_sdk.exe", "pid": 12345, "exe": str(self.sdk_manager.sdk_executable_path)}
             return [mock_process]
 
         mock_process_iter.side_effect = mock_iter
@@ -100,14 +100,11 @@ class TestMYTSDKManager(unittest.TestCase):
         with patch.object(self.sdk_manager, "is_sdk_installed", return_value=False):
             # 创建模拟的SDK可执行文件（在解压后）
             def create_sdk_file(path):
-                # 创建完整的目录结构
+                # 创建与ZIP文件内容匹配的目录结构
                 sdk_dir = Path(path)
-                sdk_dir.mkdir(parents=True, exist_ok=True)
-
-                # 创建 myt_sdk 子目录
                 myt_sdk_dir = sdk_dir / "myt_sdk"
-                myt_sdk_dir.mkdir(exist_ok=True)
-
+                myt_sdk_dir.mkdir(parents=True, exist_ok=True)
+                
                 # 创建可执行文件
                 exe_path = myt_sdk_dir / "myt_sdk.exe"
                 exe_path.touch()
@@ -206,6 +203,94 @@ class TestMYTSDKManager(unittest.TestCase):
 
         self.assertEqual(result["status"], "ready")
         mock_start.assert_not_called()
+
+    @patch.object(MYTSDKManager, "_update_sdk_config_from_url")
+    @patch.object(MYTSDKManager, "download_sdk")
+    @patch.object(MYTSDKManager, "start_sdk")
+    @patch.object(MYTSDKManager, "is_sdk_running")
+    def test_init_with_custom_url(self, mock_running, mock_start, mock_download, mock_update_config):
+        """测试使用自定义下载地址初始化"""
+        mock_running.return_value = False
+        mock_process = MagicMock()
+        mock_process.pid = 12345
+        mock_start.return_value = mock_process
+        
+        custom_url = "http://example.com/myt_sdk_2.0.0.zip"
+        result = self.sdk_manager.init(download_url=custom_url)
+        
+        mock_update_config.assert_called_once_with(custom_url)
+        mock_download.assert_called_once_with(force=True)
+        self.assertEqual(result["status"], "started")
+
+    def test_update_sdk_config_from_url_with_version(self):
+        """测试从URL更新SDK配置 - 包含版本号"""
+        old_version = self.sdk_manager.SDK_VERSION
+        old_url = self.sdk_manager.SDK_DOWNLOAD_URL
+        
+        new_url = "http://example.com/myt_sdk_2.0.15.zip"
+        self.sdk_manager._update_sdk_config_from_url(new_url)
+        
+        self.assertEqual(self.sdk_manager.SDK_DOWNLOAD_URL, new_url)
+        self.assertEqual(self.sdk_manager.SDK_VERSION, "2.0.15")
+        self.assertNotEqual(self.sdk_manager.SDK_VERSION, old_version)
+
+    def test_update_sdk_config_from_url_without_version(self):
+        """测试从URL更新SDK配置 - 不包含版本号"""
+        old_version = self.sdk_manager.SDK_VERSION
+        
+        new_url = "http://example.com/custom_sdk.zip"
+        self.sdk_manager._update_sdk_config_from_url(new_url)
+        
+        self.assertEqual(self.sdk_manager.SDK_DOWNLOAD_URL, new_url)
+        self.assertTrue(self.sdk_manager.SDK_VERSION.startswith("custom_"))
+        self.assertNotEqual(self.sdk_manager.SDK_VERSION, old_version)
+
+    @patch("py_myt.sdk_manager.psutil.process_iter")
+    def test_stop_sdk_not_running(self, mock_process_iter):
+        """测试停止SDK - 未运行"""
+        mock_process_iter.return_value = []
+        
+        with patch.object(self.sdk_manager, "is_sdk_running", return_value=False):
+            result = self.sdk_manager.stop_sdk()
+            
+            self.assertEqual(result["status"], "not_running")
+            self.assertEqual(result["stopped_processes"], 0)
+
+    @patch("py_myt.sdk_manager.psutil.process_iter")
+    def test_stop_sdk_success(self, mock_process_iter):
+        """测试停止SDK - 成功"""
+        # 创建模拟进程
+        mock_process = Mock()
+        mock_process.pid = 12345
+        mock_process.info = {"name": "myt_sdk.exe", "exe": str(self.sdk_manager.sdk_executable_path)}
+        mock_process.terminate.return_value = None
+        mock_process.wait.return_value = None
+        mock_process_iter.return_value = [mock_process]
+        
+        with patch.object(self.sdk_manager, "is_sdk_running", side_effect=[True, False]):
+            result = self.sdk_manager.stop_sdk()
+            
+            self.assertEqual(result["status"], "success")
+            self.assertEqual(result["stopped_processes"], 1)
+            mock_process.terminate.assert_called_once()
+
+    @patch("py_myt.sdk_manager.psutil.process_iter")
+    def test_stop_sdk_force(self, mock_process_iter):
+        """测试强制停止SDK"""
+        # 创建模拟进程
+        mock_process = Mock()
+        mock_process.pid = 12345
+        mock_process.info = {"name": "myt_sdk.exe", "exe": str(self.sdk_manager.sdk_executable_path)}
+        mock_process.kill.return_value = None
+        mock_process_iter.return_value = [mock_process]
+        
+        with patch.object(self.sdk_manager, "is_sdk_running", side_effect=[True, False]):
+            result = self.sdk_manager.stop_sdk(force=True)
+            
+            self.assertEqual(result["status"], "success")
+            self.assertEqual(result["stopped_processes"], 1)
+            mock_process.kill.assert_called_once()
+            mock_process.terminate.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -196,9 +196,11 @@ class MYTSDKManager:
             # 查找可执行文件（保持原始目录结构）
             exe_found = False
             actual_exe_path = None
+            # 获取可执行文件名（不包含路径）
+            exe_filename = Path(self.SDK_EXECUTABLE).name
             for root, dirs, files in os.walk(self.sdk_dir):
                 for file in files:
-                    if file.lower() == self.SDK_EXECUTABLE.lower():
+                    if file.lower() == exe_filename.lower():
                         actual_exe_path = Path(root) / file
                         logger.info(f"找到SDK可执行文件: {actual_exe_path}")
 
@@ -231,6 +233,59 @@ class MYTSDKManager:
             raise MYTSDKFileError(f"无效的ZIP文件: {str(e)}", file_path=str(zip_path))
         except Exception as e:
             raise MYTSDKFileError(f"解压SDK失败: {str(e)}", file_path=str(zip_path))
+
+    def _update_sdk_config_from_url(self, download_url: str) -> None:
+        """
+        根据下载地址更新SDK配置
+
+        Args:
+            download_url: 新的下载地址
+
+        Raises:
+            MYTSDKError: 配置更新失败时抛出
+        """
+        try:
+            logger.info(f"更新SDK配置，新下载地址: {download_url}")
+            
+            # 从URL中提取版本信息
+            parsed_url = urlparse(download_url)
+            filename = Path(parsed_url.path).name
+            
+            # 尝试从文件名中提取版本号
+            # 支持格式: myt_sdk_1.0.14.30.25.zip 或 myt_sdk_v1.0.14.30.25.zip
+            import re
+            version_pattern = r'myt_sdk_v?([\d\.]+)\.zip'
+            match = re.search(version_pattern, filename, re.IGNORECASE)
+            
+            if match:
+                new_version = match.group(1)
+                logger.info(f"从文件名检测到版本: {new_version}")
+            else:
+                # 如果无法从文件名提取版本，使用时间戳作为版本
+                import time
+                new_version = f"custom_{int(time.time())}"
+                logger.warning(f"无法从文件名提取版本，使用自定义版本: {new_version}")
+            
+            # 更新类属性
+            old_version = self.SDK_VERSION
+            old_url = self.SDK_DOWNLOAD_URL
+            
+            self.SDK_VERSION = new_version
+            self.SDK_DOWNLOAD_URL = download_url
+            
+            # 更新相关路径
+            self.sdk_dir = self.cache_dir / "myt_sdk" / self.SDK_VERSION
+            self.sdk_executable_path = self.sdk_dir / self.SDK_EXECUTABLE
+            
+            logger.info(f"SDK配置已更新:")
+            logger.info(f"  版本: {old_version} -> {new_version}")
+            logger.info(f"  下载地址: {old_url} -> {download_url}")
+            logger.info(f"  SDK目录: {self.sdk_dir}")
+            
+        except Exception as e:
+            error_msg = f"更新SDK配置失败: {str(e)}"
+            logger.error(error_msg)
+            raise MYTSDKError(error_msg)
 
     def _prepare_sdk_environment(self) -> None:
         """
@@ -382,7 +437,7 @@ class MYTSDKManager:
                 try:
                     if (
                         proc.info["name"]
-                        and self.SDK_NAME.lower() in proc.info["name"].lower()
+                        and self.SDK_EXECUTABLE.lower() in proc.info["name"].lower()
                     ):
                         sdk_processes.append(proc)
                     elif (
@@ -475,13 +530,14 @@ class MYTSDKManager:
                 process_name=self.SDK_EXECUTABLE
             )
 
-    def init(self, force: bool = False, start_sdk: bool = True) -> Dict[str, Any]:
+    def init(self, force: bool = False, start_sdk: bool = True, download_url: Optional[str] = None) -> Dict[str, Any]:
         """
         初始化SDK（下载并启动）
 
         Args:
             force: 是否强制重新下载
             start_sdk: 是否启动SDK进程
+            download_url: 自定义下载地址，如果提供则会自动检测版本并更新SDK配置
 
         Returns:
             初始化结果信息
@@ -492,6 +548,11 @@ class MYTSDKManager:
         try:
             logger.info("开始初始化MYT SDK")
 
+            # 如果提供了自定义下载地址，更新SDK配置
+            if download_url:
+                self._update_sdk_config_from_url(download_url)
+                force = True  # 使用新地址时强制重新下载
+
             # 检查是否已在运行
             if self.is_sdk_running() and not force:
                 return {
@@ -501,6 +562,7 @@ class MYTSDKManager:
                     "running": True,
                     "sdk_path": str(self.sdk_executable_path),
                     "cache_dir": str(self.cache_dir),
+                    "version": self.SDK_VERSION,
                 }
 
             # 检查是否需要下载
@@ -520,6 +582,7 @@ class MYTSDKManager:
                     "pid": process.pid if process else None,
                     "sdk_path": str(self.sdk_executable_path),
                     "cache_dir": str(self.cache_dir),
+                    "version": self.SDK_VERSION,
                 }
             else:
                 return {
@@ -529,6 +592,7 @@ class MYTSDKManager:
                     "running": self.is_sdk_running(),
                     "sdk_path": str(self.sdk_executable_path),
                     "cache_dir": str(self.cache_dir),
+                    "version": self.SDK_VERSION,
                 }
 
         except Exception as e:
