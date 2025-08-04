@@ -370,7 +370,6 @@ class MYTSDKManager:
             if sys.platform == "win32":
                 # Windows下始终隐藏控制台窗口
                 creation_flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
-                    )
 
             # 创建日志文件用于调试
             log_file = self.sdk_dir / "sdk_output.log"
