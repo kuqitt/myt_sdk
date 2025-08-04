@@ -6,8 +6,8 @@ except ImportError:
     # 如果 _version.py 不存在，使用默认版本
     __version__ = "1.1.8"
 
-__author__ = "MYT Team"
-__email__ = "support@moyunteng.com"
+__author__ = "Cooskin"
+__email__ = "kuqitt1@163.com"
 
 from .api_client import MYTAPIClient, create_client
 from .exceptions import (

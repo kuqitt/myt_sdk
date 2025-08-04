@@ -1,9 +1,11 @@
-# 建议的.gitignore内容
+# Python 字节码文件
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
+
+# 构建和分发目录
 build/
 develop-eggs/
 dist/
@@ -19,28 +21,73 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# 测试和覆盖率
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# 虚拟环境
 .venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+pyvenv.cfg
+
+# IDE 和编辑器
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+.spyderproject
+.spyproject
+.ropeproject
 
-# 操作系统
+# 操作系统文件
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Windows本地自动化脚本
+# 日志和临时文件
+*.log
+*.tmp
+*.temp
+.env
+.env.local
+.env.*.local
+
+# 缓存文件
+.*cache
+.cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# 项目特定忽略
+build_and_dump.py
+Makefile
+temp_scripts/
+*.local
+.pypirc
+*.pypirc
+
+# Windows 本地自动化脚本（保留 build_and_bump.bat）
 *.bat
+!build_and_bump.bat
 *.cmd
 *.ps1
 *.vbs
@@ -48,10 +95,11 @@ Thumbs.db
 automate.exe
 local_scripts/
 windows_tools/
-temp_scripts/
-*.local
-.pypirc
-*.pypirc
-*.log
-.env
-.*cache
+
+# 安全和配置文件
+.secrets
+*.key
+*.pem
+*.p12
+*.pfx
+config.local.*
