@@ -397,6 +397,88 @@ class TestMYTSDKManager(unittest.TestCase):
             self.assertEqual(self.sdk_manager.sdk_executable_path, expected_path)
             self.assertTrue(self.sdk_manager.sdk_executable_path.exists())
 
+    @patch("subprocess.Popen")
+    @patch("py_myt.sdk_manager.MYTSDKManager.is_sdk_installed")
+    @patch("py_myt.sdk_manager.MYTSDKManager.is_sdk_running")
+    def test_start_sdk_show_window_true(self, mock_is_running, mock_is_installed, mock_popen):
+        """测试启动SDK时显示窗口"""
+        # 设置模拟
+        mock_is_installed.return_value = True
+        mock_is_running.return_value = False
+        mock_process = Mock()
+        mock_process.pid = 12345
+        mock_process.poll.return_value = None
+        mock_popen.return_value = mock_process
+        
+        # 创建模拟的SDK可执行文件
+        sdk_path = self.sdk_manager.sdk_executable_path
+        sdk_path.parent.mkdir(parents=True, exist_ok=True)
+        sdk_path.touch()
+        
+        # 启动SDK并显示窗口
+        with patch("sys.platform", "win32"):
+            process = self.sdk_manager.start_sdk(show_window=True)
+        
+        # 验证调用参数
+        mock_popen.assert_called_once()
+        call_args = mock_popen.call_args
+        
+        # 验证creationflags参数（应该有CREATE_NEW_CONSOLE和CREATE_NEW_PROCESS_GROUP）
+        import subprocess
+        expected_flags = subprocess.CREATE_NEW_CONSOLE | subprocess.CREATE_NEW_PROCESS_GROUP
+        self.assertEqual(call_args[1]["creationflags"], expected_flags)
+        
+    @patch("subprocess.Popen")
+    @patch("py_myt.sdk_manager.MYTSDKManager.is_sdk_installed")
+    @patch("py_myt.sdk_manager.MYTSDKManager.is_sdk_running")
+    def test_start_sdk_show_window_false(self, mock_is_running, mock_is_installed, mock_popen):
+        """测试启动SDK时隐藏窗口"""
+        # 设置模拟
+        mock_is_installed.return_value = True
+        mock_is_running.return_value = False
+        mock_process = Mock()
+        mock_process.pid = 12345
+        mock_process.poll.return_value = None
+        mock_popen.return_value = mock_process
+        
+        # 创建模拟的SDK可执行文件
+        sdk_path = self.sdk_manager.sdk_executable_path
+        sdk_path.parent.mkdir(parents=True, exist_ok=True)
+        sdk_path.touch()
+        
+        # 启动SDK并隐藏窗口
+        with patch("sys.platform", "win32"):
+            process = self.sdk_manager.start_sdk(show_window=False)
+        
+        # 验证调用参数
+        mock_popen.assert_called_once()
+        call_args = mock_popen.call_args
+        
+        # 验证creationflags参数（应该包含CREATE_NO_WINDOW和CREATE_NEW_PROCESS_GROUP）
+        import subprocess
+        expected_flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+        self.assertEqual(call_args[1]["creationflags"], expected_flags)
+        
+    @patch("py_myt.sdk_manager.MYTSDKManager.start_sdk")
+    @patch("py_myt.sdk_manager.MYTSDKManager.is_sdk_installed")
+    @patch("py_myt.sdk_manager.MYTSDKManager.is_sdk_running")
+    @patch("py_myt.sdk_manager.MYTSDKManager.download_sdk")
+    def test_init_with_show_window(self, mock_download, mock_is_running, mock_is_installed, mock_start_sdk):
+        """测试init方法传递show_window参数"""
+        # 设置模拟
+        mock_is_installed.return_value = True
+        mock_is_running.return_value = False
+        mock_process = Mock()
+        mock_process.pid = 12345
+        mock_start_sdk.return_value = mock_process
+        
+        # 调用init方法并传递show_window参数
+        result = self.sdk_manager.init(show_window=True)
+        
+        # 验证start_sdk被正确调用
+        mock_start_sdk.assert_called_once_with(show_window=True)
+        self.assertEqual(result["status"], "started")
+
 
 if __name__ == "__main__":
     unittest.main()

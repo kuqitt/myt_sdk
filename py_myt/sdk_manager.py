@@ -335,12 +335,13 @@ class MYTSDKManager:
         except Exception as e:
             logger.warning(f"准备SDK运行环境时出错: {e}")
 
-    def start_sdk(self, wait: bool = False) -> subprocess.Popen:
+    def start_sdk(self, wait: bool = False, show_window: bool = False) -> subprocess.Popen:
         """
         启动SDK进程
 
         Args:
             wait: 是否等待进程结束
+            show_window: 是否显示cmd窗口（仅Windows有效）
 
         Returns:
             启动的进程对象
@@ -364,13 +365,17 @@ class MYTSDKManager:
 
             logger.info(f"启动SDK进程: {self.sdk_executable_path}")
 
-            # 启动进程（后台运行，不显示窗口）
+            # 启动进程
             creation_flags = 0
             if sys.platform == "win32":
-                # Windows下隐藏窗口并创建新进程组
-                creation_flags = (
-                    subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
-                )
+                if show_window:
+                    # Windows下显示新的控制台窗口
+                    creation_flags = subprocess.CREATE_NEW_CONSOLE | subprocess.CREATE_NEW_PROCESS_GROUP
+                else:
+                    # Windows下隐藏窗口并创建新进程组
+                    creation_flags = (
+                        subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+                    )
 
             # 创建日志文件用于调试
             log_file = self.sdk_dir / "sdk_output.log"
@@ -554,7 +559,7 @@ class MYTSDKManager:
                 process_name=self.SDK_EXECUTABLE
             )
 
-    def init(self, force: bool = False, start_sdk: bool = True, download_url: Optional[str] = None) -> Dict[str, Any]:
+    def init(self, force: bool = False, start_sdk: bool = True, download_url: Optional[str] = None, show_window: bool = False) -> Dict[str, Any]:
         """
         初始化SDK（下载并启动）
 
@@ -562,6 +567,7 @@ class MYTSDKManager:
             force: 是否强制重新下载
             start_sdk: 是否启动SDK进程
             download_url: 自定义下载地址，如果提供则会自动检测版本并更新SDK配置
+            show_window: 是否显示cmd窗口（仅Windows有效）
 
         Returns:
             初始化结果信息
@@ -599,7 +605,7 @@ class MYTSDKManager:
 
             # 是否启动SDK
             if start_sdk and not self.is_sdk_running():
-                process = self.start_sdk()
+                process = self.start_sdk(show_window=show_window)
                 return {
                     "status": "started",
                     "message": "SDK已成功启动",
