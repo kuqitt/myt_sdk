@@ -4,6 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+build_and_bump.py
 
 # 构建和分发目录
 build/
@@ -87,7 +88,6 @@ temp_scripts/
 
 # Windows 本地自动化脚本（保留 build_and_bump.bat）
 *.bat
-!build_and_bump.bat
 *.cmd
 *.ps1
 *.vbs
