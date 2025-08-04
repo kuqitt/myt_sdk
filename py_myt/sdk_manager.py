@@ -368,27 +368,32 @@ class MYTSDKManager:
             # 启动进程
             creation_flags = 0
             if sys.platform == "win32":
-                if show_window:
-                    # Windows下显示新的控制台窗口
-                    creation_flags = subprocess.CREATE_NEW_CONSOLE | subprocess.CREATE_NEW_PROCESS_GROUP
-                else:
-                    # Windows下隐藏窗口并创建新进程组
-                    creation_flags = (
-                        subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+                # Windows下始终隐藏控制台窗口
+                creation_flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
                     )
 
             # 创建日志文件用于调试
             log_file = self.sdk_dir / "sdk_output.log"
 
-            with open(log_file, "w", encoding="utf-8") as log_f:
+            if show_window:
+                # show_window=True时，不重定向输出（控制台始终隐藏）
                 process = subprocess.Popen(
                     [str(self.sdk_executable_path)],
                     cwd=str(self.sdk_dir),
-                    stdout=log_f,
-                    stderr=subprocess.STDOUT,
                     stdin=subprocess.DEVNULL,
                     creationflags=creation_flags,
                 )
+            else:
+                # show_window=False时，重定向输出到日志文件（控制台始终隐藏）
+                with open(log_file, "w", encoding="utf-8") as log_f:
+                    process = subprocess.Popen(
+                        [str(self.sdk_executable_path)],
+                        cwd=str(self.sdk_dir),
+                        stdout=log_f,
+                        stderr=subprocess.STDOUT,
+                        stdin=subprocess.DEVNULL,
+                        creationflags=creation_flags,
+                    )
 
             # 等待一小段时间确保进程启动
             import time
@@ -397,24 +402,23 @@ class MYTSDKManager:
 
             # 检查进程是否还在运行
             if process.poll() is not None:
-                # 进程已退出，读取日志
-                try:
-                    with open(log_file, "r", encoding="utf-8") as f:
-                        output = f.read()
-                    logger.error(f"SDK进程启动后立即退出，退出码: {process.returncode}")
-                    logger.error(f"SDK输出: {output}")
-                    raise MYTSDKProcessError(
-                        f"SDK进程启动失败，退出码: {process.returncode}",
-                        process_name=self.SDK_EXECUTABLE,
-                        exit_code=process.returncode,
-                    )
-                except Exception as e:
-                    logger.error(f"读取SDK日志失败: {e}")
-                    raise MYTSDKProcessError(
-                        f"SDK进程启动失败，退出码: {process.returncode}",
-                        process_name=self.SDK_EXECUTABLE,
-                        exit_code=process.returncode,
-                    )
+                # 进程已退出
+                logger.error(f"SDK进程启动后立即退出，退出码: {process.returncode}")
+                
+                if not show_window:
+                    # 只有在重定向日志模式下才尝试读取日志文件
+                    try:
+                        with open(log_file, "r", encoding="utf-8") as f:
+                            output = f.read()
+                        logger.error(f"SDK输出: {output}")
+                    except Exception as e:
+                        logger.error(f"读取SDK日志失败: {e}")
+                
+                raise MYTSDKProcessError(
+                    f"SDK进程启动失败，退出码: {process.returncode}",
+                    process_name=self.SDK_EXECUTABLE,
+                    exit_code=process.returncode,
+                )
 
             if wait:
                 process.wait()

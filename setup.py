@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="myt-sdk",
-    version="1.1.9",
+    version="1.1.12",
     author="MYT Team",
     author_email="kuqitt1@163.com",
     maintainer="MYT Team",
